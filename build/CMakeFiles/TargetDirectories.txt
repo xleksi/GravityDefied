@@ -1,0 +1,3 @@
+D:/dev/Raylib/GravityDefied/build/CMakeFiles/GravityDefied.dir
+D:/dev/Raylib/GravityDefied/build/CMakeFiles/edit_cache.dir
+D:/dev/Raylib/GravityDefied/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,9 @@
+{
+  "name": "gravity-defied",
+  "version-string": "1.0.0",
+  "description": "Configure preset using toolchain file",
+  "license": "MIT",
+  "dependencies": [
+    "raylib"
+  ]
+}
