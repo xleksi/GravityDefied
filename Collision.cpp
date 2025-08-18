@@ -2,7 +2,6 @@
 #include <cmath>
 #include <algorithm>
 
-// ==== Circle vs Rectangle ====
 bool CheckCircleRect(const Circle& c, const Rectangle& r) {
     // Clamp circle center to rectangle bounds
     float closestX = fmaxf(r.x, fminf(c.center.x, r.x + r.width));
@@ -14,7 +13,6 @@ bool CheckCircleRect(const Circle& c, const Rectangle& r) {
     return (dx*dx + dy*dy) <= (c.radius * c.radius);
 }
 
-// ==== Circle vs Circle ====
 bool CheckCircleCircle(const Circle& a, const Circle& b) {
     float dx = a.center.x - b.center.x;
     float dy = a.center.y - b.center.y;
@@ -23,7 +21,6 @@ bool CheckCircleCircle(const Circle& a, const Circle& b) {
     return distSq <= (radiusSum * radiusSum);
 }
 
-// ==== Point in Polygon (ray casting) ====
 bool PointInPolygon(Vector2 p, const Polygon& poly) {
     bool inside = false;
     for (size_t i = 0, j = poly.vertices.size() - 1; i < poly.vertices.size(); j = i++) {
@@ -38,7 +35,6 @@ bool PointInPolygon(Vector2 p, const Polygon& poly) {
     return inside;
 }
 
-// ==== Polygon vs Rectangle (basic check) ====
 bool CheckPolygonRect(const Polygon& p, const Rectangle& r) {
     // Check if any polygon vertex is inside rect
     for (auto& v : p.vertices) {

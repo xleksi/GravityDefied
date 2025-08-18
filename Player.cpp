@@ -61,15 +61,27 @@ void Player::Update(float delta, const Rectangle& ground)
 	velocity.y += GRAVITY * delta;
 	position.y += velocity.y * delta;
 
-	// Ground collision (use provided ground rectangle)
-	if (position.y >= ground.y)
-	{
-		position.y = ground.y;
-		velocity.y = 0;
-		canJump = true;
-	}
-
 	UpdateCollisionShapes();
+
+    float groundTop = ground.y;
+
+    if (rearWheel.center.y + rearWheel.radius >= groundTop)
+    {
+        float penetration = (rearWheel.center.y + rearWheel.radius) - groundTop;
+        position.y -= penetration;
+        velocity.y = 0;
+        canJump = true;
+    }
+
+    if  (frontWheel.center.y + frontWheel.radius >= groundTop)
+    {
+        float penetration = (frontWheel.center.y + frontWheel.radius) - groundTop;
+        position.y -= penetration;
+        velocity.y = 0;
+        canJump = true;
+    }
+
+    UpdateCollisionShapes();
 }
 
 void Player::Reset(Vector2 startPos)

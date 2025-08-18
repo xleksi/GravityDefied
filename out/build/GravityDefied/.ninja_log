@@ -9,3 +9,6 @@
 19	710	7772572744795926	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	1836b98b75c56230
 80	1242	7772572745397984	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
 1243	3949	7772572757034244	gravity-defied.exe	9dae01dbbc1f0ac9
+48	540	7772590077159478	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+9	608	7772590076772108	CMakeFiles/gravity-defied.dir/Collision.cpp.obj	bfb4c3af9a9b0bce
+608	2982	7772590082761678	gravity-defied.exe	9dae01dbbc1f0ac9
