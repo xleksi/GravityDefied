@@ -1,0 +1,5 @@
+{
+    "program": "${workspaceFolder}/build/gravity-defied.exe",
+    "cwd": "${workspaceFolder}",
+    "externalConsole": true
+}

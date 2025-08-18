@@ -86,7 +86,7 @@ build gravity-defied.exe: CXX_EXECUTABLE_LINKER__gravity-defied_Debug CMakeFiles
   FLAGS = -g
   LINK_LIBRARIES = vcpkg_installed/x64-windows/debug/lib/raylib.lib  vcpkg_installed/x64-windows/debug/lib/raylib.lib  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\gravity-defied.dir
-  POST_BUILD = C:\WINDOWS\system32\cmd.exe /C "cd /D D:\dev\Raylib\GravityDefied\out\build\GravityDefied && C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/Users/skrip/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/dev/Raylib/GravityDefied/out/build/GravityDefied/gravity-defied.exe -installedDir D:/dev/Raylib/GravityDefied/out/build/GravityDefied/vcpkg_installed/x64-windows/debug/bin -OutVariable out"
+  POST_BUILD = C:\WINDOWS\system32\cmd.exe /C "cd /D D:\dev\Raylib\GravityDefied\out\build\GravityDefied && C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/Users/skrip/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/dev/Raylib/GravityDefied/out/build/GravityDefied/gravity-defied.exe -installedDir D:/dev/Raylib/GravityDefied/out/build/GravityDefied/vcpkg_installed/x64-windows/debug/bin -OutVariable out && cd /D D:\dev\Raylib\GravityDefied\out\build\GravityDefied && "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory D:/dev/Raylib/GravityDefied/assets D:/dev/Raylib/GravityDefied/out/build/GravityDefied/assets"
   PRE_LINK = cd .
   TARGET_FILE = gravity-defied.exe
   TARGET_IMPLIB = libgravity-defied.dll.a

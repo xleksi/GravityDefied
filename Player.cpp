@@ -11,6 +11,22 @@ Player::Player(Vector2 startPos)
     velocity = {0.0f, 0.0f};
     canJump = false;
     startX = startPos.x;
+
+    bodyTexture = LoadTexture("assets/body.png");
+    wheelFrontTexture = LoadTexture("assets/wheel_front.png");
+    wheelRearTexture = LoadTexture("assets/wheel_rear.png");
+
+    if (bodyTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load body.png");
+    if (wheelFrontTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load wheel_front.png");
+    if (wheelRearTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load wheel_rear.png");
+
+}
+
+Player::~Player() 
+{
+    UnloadTexture(bodyTexture);
+    UnloadTexture(wheelFrontTexture);
+    UnloadTexture(wheelRearTexture);
 }
 
 void Player::Update(float delta) 
@@ -54,6 +70,10 @@ float Player::GetDistance() const
 
 void Player::Draw() const 
 {
-    Rectangle playerRect{ position.x - 20, position.y - 40, 40.0f, 40.0f };
-    DrawRectangleRec(playerRect, RED);
+    float scale = 0.33f; // Scale factor for drawing
+
+    DrawTextureEx(wheelRearTexture, Vector2{position.x - 180*scale, position.y + 5*scale}, 0.0f, scale, WHITE);
+    DrawTextureEx(wheelFrontTexture, Vector2{position.x + 40*scale, position.y - 5*scale}, 0.0f, scale, WHITE);
+    DrawTextureEx(bodyTexture, Vector2{position.x - (bodyTexture.width/2.0f)*scale, position.y - (bodyTexture.height/2.0f)*scale}, 0.0f, scale, WHITE);
+
 }

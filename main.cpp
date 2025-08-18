@@ -1,8 +1,22 @@
 #include "raylib.h"
 #include "Player.h"
 #include "CameraController.h"
+#include <iostream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
-int main() {
+int main() 
+{
+    std::cout << "CWD: " << fs::current_path() << '\n';
+    if (fs::exists("assets")) for (auto&p: fs::directory_iterator("assets")) std::cout<<p.path().filename()<<'\n';
+
+    std::cout << "CWD: " << fs::current_path() << std::endl;
+    auto assets = fs::path("assets");
+    if (fs::exists(assets)) {
+        std::cout << "'assets' exists, listing contents:\n";
+        for (auto &p : fs::directory_iterator(assets)) std::cout << "  " << p.path().filename() << '\n';
+    } else std::cout << "'assets' does not exist in CWD\n";
+
     const int screenWidth = 800;
     const int screenHeight = 450;
 

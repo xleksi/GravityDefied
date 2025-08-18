@@ -13,5 +13,10 @@ file(GLOB SOURCES "*.cpp")
 # Build executable
 add_executable(gravity-defied ${SOURCES})
 
+add_custom_command(TARGET gravity-defied POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:gravity-defied>/assets)
+
 # Link raylib
 target_link_libraries(gravity-defied PRIVATE raylib)
