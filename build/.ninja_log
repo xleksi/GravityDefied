@@ -1,3 +1,8 @@
 # ninja log v7
 23	1440	7771727885126653	CMakeFiles/GravityDefied.dir/main.cpp.obj	2466a26a0c17942b
 1443	1706	7771727899322918	GravityDefied.exe	d75f4088490eafba
+2	1226	7772570166850002	build.ninja	4aef0c8004ee2a8d
+2	1226	7772570166850002	D:/dev/Raylib/GravityDefied/build/cmake_install.cmake	4aef0c8004ee2a8d
+38	705	7772570167895684	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	3c1410d0185db5d9
+82	737	7772570168332750	CMakeFiles/gravity-defied.dir/Collision.cpp.obj	1ebc0f09edec89ff
+98	1278	7772570168496604	CMakeFiles/gravity-defied.dir/main.cpp.obj	8670de1e1d0bc4bc

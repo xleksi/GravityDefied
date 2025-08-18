@@ -1,21 +1,18 @@
 #include "raylib.h"
 #include "Player.h"
 #include "CameraController.h"
+#include "Collision.h"
 #include <iostream>
 #include <filesystem>
+
 namespace fs = std::filesystem;
 
 int main() 
 {
     std::cout << "CWD: " << fs::current_path() << '\n';
-    if (fs::exists("assets")) for (auto&p: fs::directory_iterator("assets")) std::cout<<p.path().filename()<<'\n';
-
-    std::cout << "CWD: " << fs::current_path() << std::endl;
-    auto assets = fs::path("assets");
-    if (fs::exists(assets)) {
-        std::cout << "'assets' exists, listing contents:\n";
-        for (auto &p : fs::directory_iterator(assets)) std::cout << "  " << p.path().filename() << '\n';
-    } else std::cout << "'assets' does not exist in CWD\n";
+    if (fs::exists("assets"))
+        for (auto& p : fs::directory_iterator("assets"))
+            std::cout << p.path().filename() << '\n';
 
     const int screenWidth = 800;
     const int screenHeight = 450;
@@ -26,11 +23,15 @@ int main()
     Player player({400, 280});
     CameraController camera(player.position, screenWidth, screenHeight);
 
+    const int groundY = 400;
+    const int thickness = 10;
+    Rectangle ground = {0, groundY - thickness/2.0f, screenWidth * 10.0f, (float)thickness};
+
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
 
         // Update
-        player.Update(deltaTime);
+        player.Update(deltaTime, ground);
         camera.Update(player, deltaTime);
 
         if (IsKeyPressed(KEY_R)) player.Reset({400, 280});
@@ -41,10 +42,7 @@ int main()
 
         BeginMode2D(camera.camera);
 
-        // Draw ground 
-        int thicknees = 10;
-        int groundY = 400;
-        DrawRectangle(0, groundY - thicknees/2, screenWidth * 10, thicknees, DARKGREEN);
+        DrawRectangleRec(ground, DARKGREEN);
 
         player.Draw();
 

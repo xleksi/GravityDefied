@@ -57,6 +57,14 @@ build CMakeFiles/gravity-defied.dir/CameraController.cpp.obj: CXX_COMPILER__grav
   OBJECT_DIR = CMakeFiles\gravity-defied.dir
   OBJECT_FILE_DIR = CMakeFiles\gravity-defied.dir
 
+build CMakeFiles/gravity-defied.dir/Collision.cpp.obj: CXX_COMPILER__gravity-defied_unscanned_Debug D$:/dev/Raylib/GravityDefied/Collision.cpp || cmake_object_order_depends_target_gravity-defied
+  CONFIG = Debug
+  DEP_FILE = CMakeFiles\gravity-defied.dir\Collision.cpp.obj.d
+  FLAGS = -g -ID:/dev/Raylib/GravityDefied/out/build/GravityDefied/vcpkg_installed/x64-windows/debug/../include
+  INCLUDES = -isystem D:/dev/Raylib/GravityDefied/out/build/GravityDefied/vcpkg_installed/x64-windows/include
+  OBJECT_DIR = CMakeFiles\gravity-defied.dir
+  OBJECT_FILE_DIR = CMakeFiles\gravity-defied.dir
+
 build CMakeFiles/gravity-defied.dir/Player.cpp.obj: CXX_COMPILER__gravity-defied_unscanned_Debug D$:/dev/Raylib/GravityDefied/Player.cpp || cmake_object_order_depends_target_gravity-defied
   CONFIG = Debug
   DEP_FILE = CMakeFiles\gravity-defied.dir\Player.cpp.obj.d
@@ -81,7 +89,7 @@ build CMakeFiles/gravity-defied.dir/main.cpp.obj: CXX_COMPILER__gravity-defied_u
 #############################################
 # Link the executable gravity-defied.exe
 
-build gravity-defied.exe: CXX_EXECUTABLE_LINKER__gravity-defied_Debug CMakeFiles/gravity-defied.dir/CameraController.cpp.obj CMakeFiles/gravity-defied.dir/Player.cpp.obj CMakeFiles/gravity-defied.dir/main.cpp.obj | vcpkg_installed/x64-windows/debug/lib/raylib.lib vcpkg_installed/x64-windows/debug/lib/raylib.lib
+build gravity-defied.exe: CXX_EXECUTABLE_LINKER__gravity-defied_Debug CMakeFiles/gravity-defied.dir/CameraController.cpp.obj CMakeFiles/gravity-defied.dir/Collision.cpp.obj CMakeFiles/gravity-defied.dir/Player.cpp.obj CMakeFiles/gravity-defied.dir/main.cpp.obj | vcpkg_installed/x64-windows/debug/lib/raylib.lib vcpkg_installed/x64-windows/debug/lib/raylib.lib
   CONFIG = Debug
   FLAGS = -g
   LINK_LIBRARIES = vcpkg_installed/x64-windows/debug/lib/raylib.lib  vcpkg_installed/x64-windows/debug/lib/raylib.lib  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32

@@ -99,7 +99,8 @@
 			[
 				0,
 				1,
-				2
+				2,
+				3
 			]
 		}
 	],
@@ -144,7 +145,8 @@
 			[
 				0,
 				1,
-				2
+				2,
+				3
 			]
 		}
 	],
@@ -154,6 +156,12 @@
 			"backtrace" : 2,
 			"compileGroupIndex" : 0,
 			"path" : "CameraController.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "Collision.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
