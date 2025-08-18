@@ -34,7 +34,7 @@
 			{
 				"command" : 1,
 				"file" : 1,
-				"line" : 7,
+				"line" : 14,
 				"parent" : 0
 			},
 			{
@@ -46,13 +46,13 @@
 			{
 				"command" : 2,
 				"file" : 1,
-				"line" : 9,
+				"line" : 17,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 1,
-				"line" : 6,
+				"line" : 8,
 				"parent" : 0
 			},
 			{
@@ -97,7 +97,9 @@
 			"language" : "CXX",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1,
+				2
 			]
 		}
 	],
@@ -140,12 +142,26 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1,
+				2
 			]
 		}
 	],
 	"sources" : 
 	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "CameraController.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "Player.cpp",
+			"sourceGroupIndex" : 0
+		},
 		{
 			"backtrace" : 2,
 			"compileGroupIndex" : 0,
