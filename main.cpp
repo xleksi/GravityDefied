@@ -30,13 +30,11 @@ int main()
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
 
-        // Update
         player.Update(deltaTime, ground);
         camera.Update(player, deltaTime);
 
         if (IsKeyPressed(KEY_R)) player.Reset({400, 280});
 
-        // Draw
         BeginDrawing();
         ClearBackground(LIGHTGRAY);
 
@@ -49,7 +47,7 @@ int main()
         EndMode2D();
 
         DrawText("Controls: A/D to move, SPACE to jump, R to reset", 20, 20, 10, DARKGRAY);
-        float distance = player.GetDistance()/100.0f; // Convert to meters
+        float distance = player.GetDistance()/100.0f; 
         DrawText(TextFormat("Distance: %.1f", distance), 20, 50, 20, BLACK);
         DrawFPS(screenWidth - 100, 10);
 

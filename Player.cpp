@@ -1,5 +1,6 @@
 #include "Player.h"
 #include <raylib.h>
+#include <raymath.h>
 
 constexpr float GRAVITY = 800.0f;
 constexpr float PLAYER_HOR_SPD = 200.0f;
@@ -24,64 +25,72 @@ Player::Player(Vector2 startPos)
 
 void Player::UpdateCollisionShapes()
 {
-	// Rear wheel
-	rearWheel.center = { position.x - 42.5f, position.y + 18.0f };
-	rearWheel.radius = 14.5f;
+	rearWheel.center  = { position.x - 42.5f, position.y + 20.0f };
+    rearWheel.radius  = 14.5f;
 
-	// Front wheel
-	frontWheel.center = { position.x + 33.0f, position.y + 18.0f };
-	frontWheel.radius = 17.0f;
+    frontWheel.center = { position.x + 33.0f, position.y + 18.0f };
+    frontWheel.radius = 17.0f;
 
-	// Head
-	head.center = { position.x, position.y - 35.0f };
-	head.radius = 7.5f;
+    head.center = { position.x, position.y - 35.0f };
+    head.radius = 7.5f;
 
-	// Body polygon
-	bodyPoly.vertices = {
-		{ position.x - 55.0f, position.y - 15.0f }, // left top
-		{ position.x + 35.0f, position.y - 15.0f }, // right top
-		{ position.x, position.y + 25.0f }         // bottom tip
+    bodyPoly.vertices = 
+	{
+        { position.x - 55.0f, position.y - 15.0f },
+        { position.x + 35.0f, position.y - 15.0f },
+        { position.x,          position.y + 25.0f }
 	};
 }
 
-void Player::Update(float delta, const Rectangle& ground)
+void Player::Update(float delta, const Rectangle & ground)
 {
-	// Horizontal movement: A/D keys
-	if (IsKeyDown(KEY_A)) position.x -= PLAYER_HOR_SPD * delta;
-	if (IsKeyDown(KEY_D)) position.x += PLAYER_HOR_SPD * delta;
+    // -------- INPUT: rear-wheel throttle --------
+    if (IsKeyDown(KEY_W))      acceleration = 800.0f;   // accelerate
+    else if (IsKeyDown(KEY_S)) acceleration = -400.0f;  // brake/reverse
+    else                       acceleration = 0.0f;
 
-	// Jump
-	if (IsKeyDown(KEY_SPACE) && canJump)
-	{
-		velocity.y = -PLAYER_JUMP_SPD;
-		canJump = false;
-	}
+    // -------- Horizontal dynamics (rear-wheel drives) --------
+    velocity.x += acceleration * delta;         // integrate accel
+    velocity.x *= 0.98f;                        // damping/friction
+    position.x += velocity.x * delta;           // integrate vel
 
-	// Apply gravity
-	velocity.y += GRAVITY * delta;
-	position.y += velocity.y * delta;
+    // -------- Wheel spin from distance traveled --------
+    UpdateCollisionShapes();                    // refresh radii before using them
+    float distX = velocity.x * delta;
+    float rearCirc  = 2.0f * PI * rearWheel.radius;
+    float frontCirc = 2.0f * PI * frontWheel.radius;
 
-	UpdateCollisionShapes();
+    wheelRotationRear  += (distX / rearCirc)  * 360.0f;   // rear driven
+    wheelRotationFront += (distX / frontCirc) * 360.0f;   // passive roll
+    // keep angles in a small range (optional)
+    if (wheelRotationRear  >  36000.0f || wheelRotationRear  < -36000.0f)  wheelRotationRear  = fmodf(wheelRotationRear, 360.0f);
+    if (wheelRotationFront >  36000.0f || wheelRotationFront < -36000.0f) wheelRotationFront = fmodf(wheelRotationFront, 360.0f);
 
-    float groundTop = ground.y;
-
-    if (rearWheel.center.y + rearWheel.radius >= groundTop)
-    {
-        float penetration = (rearWheel.center.y + rearWheel.radius) - groundTop;
-        position.y -= penetration;
-        velocity.y = 0;
-        canJump = true;
+    // -------- Vertical dynamics --------
+    if (IsKeyDown(KEY_SPACE) && canJump) {
+        velocity.y = -350.0f;
+        canJump = false;
     }
-
-    if  (frontWheel.center.y + frontWheel.radius >= groundTop)
-    {
-        float penetration = (frontWheel.center.y + frontWheel.radius) - groundTop;
-        position.y -= penetration;
-        velocity.y = 0;
-        canJump = true;
-    }
+    velocity.y += 800.0f * delta;              // gravity
+    position.y += velocity.y * delta;
 
     UpdateCollisionShapes();
+
+    // -------- Ground collision (resolve ONCE using max penetration) --------
+    const float groundTop = ground.y;
+    float penRear  = rearWheel.center.y  + rearWheel.radius  - groundTop;
+    float penFront = frontWheel.center.y + frontWheel.radius - groundTop;
+
+    float penetration = 0.0f;
+    if (penRear  > penetration) penetration = penRear;
+    if (penFront > penetration) penetration = penFront;
+
+    if (penetration > 0.0f) {
+        position.y -= penetration;     // lift bike once
+        velocity.y = 0.0f;
+        canJump = true;
+        UpdateCollisionShapes();       // positions changed
+    }
 }
 
 void Player::Reset(Vector2 startPos)
@@ -99,22 +108,29 @@ float Player::GetDistance() const
 
 void Player::Draw() const
 {
-	float scale = 0.33f; // Scale factor for drawing
+	// --- Wheels: draw centered on their collision circles ---
+    Rectangle srcRear  = { 0, 0, (float)wheelRearTexture.width,  (float)wheelRearTexture.height };
+    Rectangle srcFront = { 0, 0, (float)wheelFrontTexture.width, (float)wheelFrontTexture.height };
 
-	DrawTextureEx(wheelRearTexture, Vector2{ position.x - 180.0f * scale, position.y + 5.0f * scale }, 0.0f, scale, WHITE);
-	DrawTextureEx(wheelFrontTexture, Vector2{ position.x + 40.0f * scale, position.y - 5.0f * scale }, 0.0f, scale, WHITE);
-	DrawTextureEx(bodyTexture, Vector2{ position.x - (bodyTexture.width / 2.0f) * scale, position.y - (bodyTexture.height / 2.0f) * scale }, 0.0f, scale, WHITE);
+    Rectangle dstRear  = { rearWheel.center.x,  rearWheel.center.y,
+                           wheelRearTexture.width  * scale, wheelRearTexture.height  * scale };
+    Rectangle dstFront = { frontWheel.center.x, frontWheel.center.y,
+                           wheelFrontTexture.width * scale, wheelFrontTexture.height * scale };
 
-	// Debug draw collision shapes
-	DrawCircleLines((int)rearWheel.center.x, (int)rearWheel.center.y, rearWheel.radius, RED);
-	DrawCircleLines((int)frontWheel.center.x, (int)frontWheel.center.y, frontWheel.radius, RED);
-	DrawCircleLines((int)head.center.x, (int)head.center.y, head.radius, BLUE);
+    Vector2 originRear  = { dstRear.width  * 0.5f, dstRear.height  * 0.5f };
+    Vector2 originFront = { dstFront.width * 0.5f, dstFront.height * 0.5f };
 
-	// Body polygon
-	for (size_t i = 0; i < bodyPoly.vertices.size(); i++)
-	{
-		Vector2 v1 = bodyPoly.vertices[i];
-		Vector2 v2 = bodyPoly.vertices[(i + 1) % bodyPoly.vertices.size()];
-		DrawLineV(v1, v2, GREEN);
-	}
+    DrawTexturePro(wheelRearTexture,  srcRear,  dstRear,  originRear,  wheelRotationRear,  WHITE);
+    DrawTexturePro(wheelFrontTexture, srcFront, dstFront, originFront, wheelRotationFront, WHITE);
+
+    // --- Body: keep your current placement (tweak as needed) ---
+    DrawTextureEx(bodyTexture,
+        { position.x - (bodyTexture.width  * 0.5f) * scale,
+          position.y - (bodyTexture.height * 0.5f) * scale },
+        0.0f, scale, WHITE);
+
+    // --- Debug (optional) ---
+    DrawCircleLines((int)rearWheel.center.x,  (int)rearWheel.center.y,  rearWheel.radius,  RED);
+    DrawCircleLines((int)frontWheel.center.x, (int)frontWheel.center.y, frontWheel.radius, RED);
+    DrawCircleLines((int)head.center.x,       (int)head.center.y,       head.radius,       BLUE);
 }

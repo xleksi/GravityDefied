@@ -1,14 +1,9 @@
 # ninja log v7
 1106	1361	7771746421030798	GravityDefied.exe	3b3112c85af93bab
-64	1288	7772569651544358	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
-534	2976	7772571594572602	gravity-defied.exe	9dae01dbbc1f0ac9
-8	533	7772571589317546	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
-8	751	7772569650982358	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	1836b98b75c56230
-49	757	7772569651394984	CMakeFiles/gravity-defied.dir/Collision.cpp.obj	bfb4c3af9a9b0bce
-68	682	7772572745282494	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
-19	710	7772572744795926	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	1836b98b75c56230
-80	1242	7772572745397984	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
-1243	3949	7772572757034244	gravity-defied.exe	9dae01dbbc1f0ac9
-48	540	7772590077159478	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+70	1226	7780287030039645	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
+725	3037	7780305979031572	gravity-defied.exe	9dae01dbbc1f0ac9
+26	725	7780305972039580	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+10	813	7780287029438687	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	1836b98b75c56230
 9	608	7772590076772108	CMakeFiles/gravity-defied.dir/Collision.cpp.obj	bfb4c3af9a9b0bce
-608	2982	7772590082761678	gravity-defied.exe	9dae01dbbc1f0ac9
+20	711	7780307703688229	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+711	3318	7780307710611265	gravity-defied.exe	9dae01dbbc1f0ac9

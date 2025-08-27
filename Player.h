@@ -10,16 +10,18 @@ public:
 
     Circle rearWheel;
     Circle frontWheel;
-    // Additional collision shapes
     Circle head;
     Polygon bodyPoly;
+    
+    float acceleration = 0.0f;
+    float wheelRotationRear = 0.0f;
+    float wheelRotationFront = 0.0f;
+    float scale = 0.33f;
 
-    // Visuals
     Texture2D bodyTexture;
     Texture2D wheelFrontTexture;
     Texture2D wheelRearTexture;
 
-    // Starting X position for distance tracking
     float startX;
 
     Player(Vector2 startPos);
