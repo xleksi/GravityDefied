@@ -11,7 +11,6 @@ Player::Player(Vector2 startPos)
 {
 	position = startPos;
 	velocity = { 0.0f, 0.0f };
-	canJump = false;
 	startX = startPos.x;
 
 	bodyTexture = LoadTexture("assets/body.png");
@@ -66,11 +65,6 @@ void Player::Update(float delta, const Terrain& Terrain)
     if (wheelRotationRear  >  36000.0f || wheelRotationRear  < -36000.0f)  wheelRotationRear  = fmodf(wheelRotationRear, 360.0f);
     if (wheelRotationFront >  36000.0f || wheelRotationFront < -36000.0f) wheelRotationFront = fmodf(wheelRotationFront, 360.0f);
 
-    // -------- Vertical dynamics --------
-    if (IsKeyDown(KEY_SPACE) && canJump) {
-        velocity.y = -350.0f;
-        canJump = false;
-    }
     velocity.y += 800.0f * delta;              // gravity
     position.y += velocity.y * delta;
 
@@ -89,7 +83,6 @@ void Player::Update(float delta, const Terrain& Terrain)
     if (penetration > 0.0f) {
         position.y -= penetration;
         velocity.y = 0.0f;
-        canJump = true;
         UpdateCollisionShapes(); // recompute wheel centers
     }
 
@@ -100,7 +93,6 @@ void Player::Update(float delta, const Terrain& Terrain)
     if (penetration > 0.0f) {
         position.y -= penetration;     // lift bike once
         velocity.y = 0.0f;
-        canJump = true;
         UpdateCollisionShapes();       // positions changed
     }
 }
@@ -109,7 +101,6 @@ void Player::Reset(Vector2 startPos)
 {
 	position = startPos;
 	velocity = { 0.0f, 0.0f };
-	canJump = false;
 	startX = startPos.x;
 }
 

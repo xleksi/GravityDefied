@@ -11,3 +11,11 @@
 64	1020	7780355307763083	CMakeFiles/gravity-defied.dir/Terrain.cpp.obj	d44a27eebb0456c4
 25	693	7780355488135537	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
 694	3270	7780355494823786	gravity-defied.exe	aa713e46fc07e0f
+25	1140	7780357432745706	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
+1141	3536	7780357443905691	gravity-defied.exe	aa713e46fc07e0f
+29	696	7780362047909865	CMakeFiles/gravity-defied.dir/CameraController.cpp.obj	1836b98b75c56230
+77	1293	7780362048387515	CMakeFiles/gravity-defied.dir/main.cpp.obj	ceab889cb96ff299
+9	675	7780362808854394	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+675	3075	7780362815520144	gravity-defied.exe	aa713e46fc07e0f
+26	679	7780363209163709	CMakeFiles/gravity-defied.dir/Player.cpp.obj	3689fe5c3d88cdb8
+680	3064	7780363215699269	gravity-defied.exe	aa713e46fc07e0f

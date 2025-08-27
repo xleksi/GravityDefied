@@ -7,7 +7,6 @@ class Player {
 public:
     Vector2 position;
     Vector2 velocity;
-    bool canJump;
 
     Circle rearWheel;
     Circle frontWheel;
@@ -18,6 +17,7 @@ public:
     float wheelRotationRear = 0.0f;
     float wheelRotationFront = 0.0f;
     float scale = 0.33f;
+    float bodyRotation = 0.0f;
 
     Texture2D bodyTexture;
     Texture2D wheelFrontTexture;
