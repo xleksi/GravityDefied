@@ -1,0 +1,572 @@
+//main.cpp
+#include "raylib.h"
+#include "Player.h"
+#include "CameraController.h"
+#include "Collision.h"
+#include <iostream>
+#include <filesystem>
+#include "Terrain.h"
+
+namespace fs = std::filesystem;
+
+int main() 
+{
+    std::cout << "CWD: " << fs::current_path() << '\n';
+    if (fs::exists("assets"))
+        for (auto& p : fs::directory_iterator("assets"))
+            std::cout << p.path().filename() << '\n';
+
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "Gravity Defied Prototype (C++/Raylib)");
+    SetTargetFPS(144);
+
+    Player player({400, 280});
+    CameraController camera(player.position, screenWidth, screenHeight);
+
+    // const int groundY = 400;
+    // const int thickness = 10;
+    // Rectangle ground = {0, groundY - thickness/2.0f, screenWidth * 10.0f, (float)thickness};
+
+    // while (!WindowShouldClose()) {
+    //     float deltaTime = GetFrameTime();
+
+    //     player.Update(deltaTime, ground);
+    //     camera.Update(player, deltaTime);
+
+    //     if (IsKeyPressed(KEY_R)) player.Reset({400, 280});
+
+    //     BeginDrawing();
+    //     ClearBackground(LIGHTGRAY);
+
+    //     BeginMode2D(camera.camera);
+
+    //     DrawRectangleRec(ground, DARKGREEN);
+
+    //     player.Draw();
+
+    //     EndMode2D();
+
+    //     DrawText("Controls: A/D to move, SPACE to jump, R to reset", 20, 20, 10, DARKGRAY);
+    //     float distance = player.GetDistance()/100.0f; 
+    //     DrawText(TextFormat("Distance: %.1f", distance), 20, 50, 20, BLACK);
+    //     DrawFPS(screenWidth - 100, 10);
+
+    //     EndDrawing();
+    // }
+
+    Terrain terrain(player.position.x);
+
+    while (!WindowShouldClose()) {
+        float dt = GetFrameTime();
+
+        terrain.Update(camera.camera.target.x);  // or player.position.x
+        player.Update(dt, terrain);
+        camera.Update(player, dt);
+
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        BeginMode2D(camera.camera);
+
+            terrain.Draw();
+            player.Draw();
+
+        EndMode2D();
+
+        DrawText("Controls: A/D to move, SPACE to jump, R to reset", 20, 20, 10, DARKGRAY);
+        float distance = player.GetDistance()/100.0f; 
+        DrawText(TextFormat("Distance: %.1f", distance), 20, 50, 20, BLACK);
+        DrawFPS(screenWidth - 100, 10);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+//Terrain.h
+#pragma once
+#include "raylib.h"
+#include <vector>
+
+class Terrain {
+public:
+    Terrain(float startX = 0.0f);
+
+    // (Re)generate points covering [cameraX - viewBehind, cameraX + viewAhead]
+    void EnsureCoverage(float minX, float maxX);
+
+    // Call each frame to maybe extend/remove points based on camera/player
+    void Update(float cameraX);
+
+    // Draw using provided camera
+    void Draw() const;
+
+    // Query height (y) at arbitrary world x (linear interp)
+    float GetHeightAt(float x) const;
+
+    // Settings you may tweak
+    float baseY;           // baseline y coordinate
+    float segmentLength;   // horizontal distance between samples
+    float bumpRange;       // max vertical change per sample
+    float viewAhead;       // generation distance ahead of camera
+    float viewBehind;      // generation distance behind camera
+
+private:
+    std::vector<Vector2> pts; // sampled points (x,y)
+    float leftX;              // current leftmost x covered
+    float rightX;             // current rightmost x covered
+
+    void GenerateNext();      // generate one new point at right side
+    void GeneratePrev();      // (not used often) generate to the left if needed
+};
+
+//Terrain.cpp
+#include "Terrain.h"
+#include <random>
+#include <algorithm>
+
+Terrain::Terrain(float startX) {
+    baseY = 400.0f;       // default baseline (tweak to your camera/world)
+    segmentLength = 40.0f; // horizontal sample spacing - tweak smaller for bumpier
+    bumpRange = 40.0f;     // per-sample vertical change limit
+    viewAhead = 1200.0f;
+    viewBehind = 800.0f;
+
+    pts.clear();
+    leftX = startX - viewBehind;
+    rightX = startX + viewAhead;
+
+    // seed initial linear points
+    float x = leftX;
+    std::mt19937 rng(12345); // fixed seed for repeatable testing; replace with device seed later
+    std::uniform_real_distribution<float> d(-bumpRange, bumpRange);
+
+    // build initial points using small random walk
+    float y = baseY;
+    while (x <= rightX + segmentLength) {
+        y += d(rng) * 0.25f;                     // small jitter
+        // clamp to reasonable range
+        y = std::clamp(y, baseY - 120.0f, baseY + 120.0f);
+        pts.push_back({ x, y });
+        x += segmentLength;
+    }
+    // set exact bounds
+    leftX = pts.front().x;
+    rightX = pts.back().x;
+}
+
+// Generate a next sample on the right
+void Terrain::GenerateNext() {
+    // pseudo-random using previous value (deterministic but ok)
+    static std::mt19937 rng( (unsigned) time(nullptr) );
+    std::uniform_real_distribution<float> d(-bumpRange, bumpRange);
+
+    float lastY = pts.empty() ? baseY : pts.back().y;
+    float nx = pts.empty() ? leftX : pts.back().x + segmentLength;
+    float ny = lastY + d(rng) * 0.5f; // smaller steps
+    ny = std::clamp(ny, baseY - 160.0f, baseY + 160.0f);
+    pts.push_back({ nx, ny });
+    rightX = pts.back().x;
+}
+
+// Extend left if needed (usually not needed but implemented)
+void Terrain::GeneratePrev() {
+    static std::mt19937 rng( (unsigned) (time(nullptr) ^ 0xdeadbeef) );
+    std::uniform_real_distribution<float> d(-bumpRange, bumpRange);
+
+    float firstY = pts.empty() ? baseY : pts.front().y;
+    float nx = pts.empty() ? leftX : pts.front().x - segmentLength;
+    float ny = firstY + d(rng) * 0.5f;
+    ny = std::clamp(ny, baseY - 160.0f, baseY + 160.0f);
+    pts.insert(pts.begin(), { nx, ny });
+    leftX = pts.front().x;
+}
+
+void Terrain::EnsureCoverage(float minX, float maxX) {
+    // extend to the right until we cover maxX
+    while (rightX < maxX + segmentLength) GenerateNext();
+    // extend to the left if needed
+    while (leftX > minX - segmentLength) GeneratePrev();
+
+    // trim far-left points to keep vector small
+    while (!pts.empty() && pts.size() > 4 && pts.front().x < minX - segmentLength*2) {
+        pts.erase(pts.begin());
+        leftX = pts.front().x;
+    }
+    // trim far-right (rare)
+    while (!pts.empty() && pts.size() > 4 && pts.back().x > maxX + segmentLength*3) {
+        pts.pop_back();
+        rightX = pts.back().x;
+    }
+}
+
+void Terrain::Update(float cameraX) {
+    float minX = cameraX - viewBehind;
+    float maxX = cameraX + viewAhead;
+    EnsureCoverage(minX, maxX);
+}
+
+float lerp(float a, float b, float t) { return a + (b - a) * t; }
+
+float Terrain::GetHeightAt(float x) const {
+    if (pts.empty()) return baseY;
+    // clamp outside
+    if (x <= pts.front().x) return pts.front().y;
+    if (x >= pts.back().x)  return pts.back().y;
+    // find segment
+    // naive linear scan (fast enough for small arrays); could do binary search if many points
+    for (size_t i = 0; i + 1 < pts.size(); ++i) {
+        float x1 = pts[i].x, x2 = pts[i+1].x;
+        if (x >= x1 && x <= x2) {
+            float t = (x - x1) / (x2 - x1);
+            // smooth interpolation (optional): use cosine interp for smoother hills
+            float t2 = (1 - cosf(t * PI)) * 0.5f;
+            return lerp(pts[i].y, pts[i+1].y, t2);
+        }
+    }
+    return baseY;
+}
+
+void Terrain::Draw() const {
+    if (pts.size() < 2) return;
+    // fill polygon between samples and bottom of screen (big Y value)
+    float bottom = baseY + 600.0f; // deep enough to cover screen
+    Color fill = DARKGREEN;
+    // draw triangles for each segment
+    for (size_t i = 0; i + 1 < pts.size(); ++i) {
+        Vector2 p1 = pts[i];
+        Vector2 p2 = pts[i+1];
+        // two triangles: p1,p2,bottom-right and p1,bottom-right,bottom-left
+        DrawTriangle(p1, p2, { p2.x, bottom }, fill);
+        DrawTriangle(p1, { p2.x, bottom }, { p1.x, bottom }, fill);
+        // optionally draw ridge line
+        DrawLineEx(p1, p2, 3.0f, GREEN);
+    }
+}
+
+//Player.h
+#pragma once
+#include "raylib.h"
+#include "Collision.h"
+#include "Terrain.h"
+
+class Player {
+public:
+    Vector2 position;
+    Vector2 velocity;
+    bool canJump;
+
+    Circle rearWheel;
+    Circle frontWheel;
+    Circle head;
+    Polygon bodyPoly;
+    
+    float acceleration = 0.0f;
+    float wheelRotationRear = 0.0f;
+    float wheelRotationFront = 0.0f;
+    float scale = 0.33f;
+
+    Texture2D bodyTexture;
+    Texture2D wheelFrontTexture;
+    Texture2D wheelRearTexture;
+
+    float startX;
+
+    Player(Vector2 startPos);
+
+    void Update(float delta, const Terrain& terrain);
+    void Draw() const;
+    void Reset(Vector2 startPos);
+    float GetDistance() const;
+
+private:
+    void UpdateCollisionShapes();
+};
+
+//Player.cpp
+#include "Player.h"
+#include <raylib.h>
+#include <raymath.h>
+
+constexpr float GRAVITY = 800.0f;
+constexpr float PLAYER_HOR_SPD = 200.0f;
+constexpr float PLAYER_JUMP_SPD = 350.0f;
+constexpr int GROUND_Y = 400; // y-coordinate of ground
+
+Player::Player(Vector2 startPos)
+{
+	position = startPos;
+	velocity = { 0.0f, 0.0f };
+	canJump = false;
+	startX = startPos.x;
+
+	bodyTexture = LoadTexture("assets/body.png");
+	wheelFrontTexture = LoadTexture("assets/wheel_front.png");
+	wheelRearTexture = LoadTexture("assets/wheel_rear.png");
+
+	if (bodyTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load body.png");
+	if (wheelFrontTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load wheel_front.png");
+	if (wheelRearTexture.id == 0) TraceLog(LOG_ERROR, "Failed to load wheel_rear.png");
+}
+
+void Player::UpdateCollisionShapes()
+{
+	rearWheel.center  = { position.x - 42.5f, position.y + 20.0f };
+    rearWheel.radius  = 14.5f;
+
+    frontWheel.center = { position.x + 33.0f, position.y + 18.0f };
+    frontWheel.radius = 17.0f;
+
+    head.center = { position.x, position.y - 35.0f };
+    head.radius = 7.5f;
+
+    bodyPoly.vertices = 
+	{
+        { position.x - 55.0f, position.y - 15.0f },
+        { position.x + 35.0f, position.y - 15.0f },
+        { position.x,          position.y + 25.0f }
+	};
+}
+
+void Player::Update(float delta, const Terrain& ground)
+{
+    // -------- INPUT: rear-wheel throttle --------
+    if (IsKeyDown(KEY_W))      acceleration = 800.0f;   // accelerate
+    else if (IsKeyDown(KEY_S)) acceleration = -400.0f;  // brake/reverse
+    else                       acceleration = 0.0f;
+
+    // -------- Horizontal dynamics (rear-wheel drives) --------
+    velocity.x += acceleration * delta;         // integrate accel
+    velocity.x *= 0.98f;                        // damping/friction
+    position.x += velocity.x * delta;           // integrate vel
+
+    // -------- Wheel spin from distance traveled --------
+    UpdateCollisionShapes();                    // refresh radii before using them
+    float distX = velocity.x * delta;
+    float rearCirc  = 2.0f * PI * rearWheel.radius;
+    float frontCirc = 2.0f * PI * frontWheel.radius;
+
+    wheelRotationRear  += (distX / rearCirc)  * 360.0f;   // rear driven
+    wheelRotationFront += (distX / frontCirc) * 360.0f;   // passive roll
+    // keep angles in a small range (optional)
+    if (wheelRotationRear  >  36000.0f || wheelRotationRear  < -36000.0f)  wheelRotationRear  = fmodf(wheelRotationRear, 360.0f);
+    if (wheelRotationFront >  36000.0f || wheelRotationFront < -36000.0f) wheelRotationFront = fmodf(wheelRotationFront, 360.0f);
+
+    // -------- Vertical dynamics --------
+    if (IsKeyDown(KEY_SPACE) && canJump) {
+        velocity.y = -350.0f;
+        canJump = false;
+    }
+    velocity.y += 800.0f * delta;              // gravity
+    position.y += velocity.y * delta;
+
+    UpdateCollisionShapes();
+    // Query terrain height under wheel centers
+    float groundAtRear  = terrain.GetHeightAt(rearWheel.center.x);
+    float groundAtFront = terrain.GetHeightAt(frontWheel.center.x);
+
+    // compute penetration
+    float penRear  = rearWheel.center.y  + rearWheel.radius  - groundAtRear;
+    float penFront = frontWheel.center.y + frontWheel.radius - groundAtFront;
+
+    // resolve once using max penetration
+    float penetration = std::max(0.0f, std::max(penRear, penFront));
+    if (penetration > 0.0f) {
+        position.y -= penetration;
+        velocity.y = 0.0f;
+        canJump = true;
+        UpdateCollisionShapes(); // recompute wheel centers
+    }
+
+    float penetration = 0.0f;
+    if (penRear  > penetration) penetration = penRear;
+    if (penFront > penetration) penetration = penFront;
+
+    if (penetration > 0.0f) {
+        position.y -= penetration;     // lift bike once
+        velocity.y = 0.0f;
+        canJump = true;
+        UpdateCollisionShapes();       // positions changed
+    }
+}
+
+void Player::Reset(Vector2 startPos)
+{
+	position = startPos;
+	velocity = { 0.0f, 0.0f };
+	canJump = false;
+	startX = startPos.x;
+}
+
+float Player::GetDistance() const
+{
+	return position.x - startX;
+}
+
+void Player::Draw() const
+{
+	// --- Wheels: draw centered on their collision circles ---
+    Rectangle srcRear  = { 0, 0, (float)wheelRearTexture.width,  (float)wheelRearTexture.height };
+    Rectangle srcFront = { 0, 0, (float)wheelFrontTexture.width, (float)wheelFrontTexture.height };
+
+    Rectangle dstRear  = { rearWheel.center.x,  rearWheel.center.y,
+                           wheelRearTexture.width  * scale, wheelRearTexture.height  * scale };
+    Rectangle dstFront = { frontWheel.center.x, frontWheel.center.y,
+                           wheelFrontTexture.width * scale, wheelFrontTexture.height * scale };
+
+    Vector2 originRear  = { dstRear.width  * 0.5f, dstRear.height  * 0.5f };
+    Vector2 originFront = { dstFront.width * 0.5f, dstFront.height * 0.5f };
+
+    DrawTexturePro(wheelRearTexture,  srcRear,  dstRear,  originRear,  wheelRotationRear,  WHITE);
+    DrawTexturePro(wheelFrontTexture, srcFront, dstFront, originFront, wheelRotationFront, WHITE);
+
+    // --- Body: keep your current placement (tweak as needed) ---
+    DrawTextureEx(bodyTexture,
+        { position.x - (bodyTexture.width  * 0.5f) * scale,
+          position.y - (bodyTexture.height * 0.5f) * scale },
+        0.0f, scale, WHITE);
+
+    // --- Debug (optional) ---
+    DrawCircleLines((int)rearWheel.center.x,  (int)rearWheel.center.y,  rearWheel.radius,  RED);
+    DrawCircleLines((int)frontWheel.center.x, (int)frontWheel.center.y, frontWheel.radius, RED);
+    DrawCircleLines((int)head.center.x,       (int)head.center.y,       head.radius,       BLUE);
+}
+
+//Collision.h
+#pragma once
+#include "raylib.h"
+#include <vector>
+
+// ==== Shape structures ====
+struct Circle {
+    Vector2 center;
+    float radius;
+};
+
+struct Polygon {
+    std::vector<Vector2> vertices;
+};
+
+// ==== Collision functions ====
+
+// Circle vs Rectangle (axis-aligned)
+bool CheckCircleRect(const Circle& c, const Rectangle& r);
+
+// Circle vs Circle (basic overlap check)
+bool CheckCircleCircle(const Circle& a, const Circle& b);
+
+// Point in Polygon (helper, useful for SAT later)
+bool PointInPolygon(Vector2 p, const Polygon& poly);
+
+// Polygon vs Rectangle (basic overlap check)
+bool CheckPolygonRect(const Polygon& p, const Rectangle& r);
+
+
+//Collision.cpp
+#include "Collision.h"
+#include <cmath>
+#include <algorithm>
+
+bool CheckCircleRect(const Circle& c, const Rectangle& r) {
+    // Clamp circle center to rectangle bounds
+    float closestX = fmaxf(r.x, fminf(c.center.x, r.x + r.width));
+    float closestY = fmaxf(r.y, fminf(c.center.y, r.y + r.height));
+
+    float dx = c.center.x - closestX;
+    float dy = c.center.y - closestY;
+
+    return (dx*dx + dy*dy) <= (c.radius * c.radius);
+}
+
+bool CheckCircleCircle(const Circle& a, const Circle& b) {
+    float dx = a.center.x - b.center.x;
+    float dy = a.center.y - b.center.y;
+    float distSq = dx*dx + dy*dy;
+    float radiusSum = a.radius + b.radius;
+    return distSq <= (radiusSum * radiusSum);
+}
+
+bool PointInPolygon(Vector2 p, const Polygon& poly) {
+    bool inside = false;
+    for (size_t i = 0, j = poly.vertices.size() - 1; i < poly.vertices.size(); j = i++) {
+        Vector2 vi = poly.vertices[i];
+        Vector2 vj = poly.vertices[j];
+
+        if (((vi.y > p.y) != (vj.y > p.y)) &&
+            (p.x < (vj.x - vi.x) * (p.y - vi.y) / (vj.y - vi.y) + vi.x)) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+bool CheckPolygonRect(const Polygon& p, const Rectangle& r) {
+    // Check if any polygon vertex is inside rect
+    for (auto& v : p.vertices) {
+        if (v.x >= r.x && v.x <= r.x + r.width &&
+            v.y >= r.y && v.y <= r.y + r.height) {
+            return true;
+        }
+    }
+    // Check if rect corners are inside polygon
+    Vector2 corners[4] = {
+        {r.x, r.y},
+        {r.x + r.width, r.y},
+        {r.x + r.width, r.y + r.height},
+        {r.x, r.y + r.height}
+    };
+    for (auto& c : corners) {
+        if (PointInPolygon(c, p)) return true;
+    }
+
+    return false;
+}
+
+//CameraConctroller.h
+#pragma once
+#include "raylib.h"
+#include "Player.h"
+
+class CameraController {
+public:
+    Camera2D camera;
+    
+    // Construct targeting a start position (usually player's pos)
+    CameraController(const Vector2& target, int screenWidth, int screenHeight);
+
+    // Smoothly follow the player
+    void Update(const Player& player, float deltaTime);
+};
+
+//CameraController.cpp
+#include "CameraController.h"
+#include "raymath.h"
+#include <cmath>
+
+CameraController::CameraController(Vector2 target, int screenWidth, int screenHeight) 
+{
+    camera.target = target;
+    camera.offset = { (float)screenWidth / 2, (float)screenHeight / 2 };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+}
+
+void CameraController::Update(const Player& player, float delta) 
+{
+    static float minSpeed = 30;
+    static float minEffectLength = 10;
+    static float fractionSpeed = 0.8f;
+
+    camera.offset = { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
+    Vector2 diff = Vector2Subtract(player.position, camera.target);
+    float length = Vector2Length(diff);
+
+    if (length > minEffectLength) 
+    {
+        float speed = fmaxf(fractionSpeed * length, minSpeed);
+        camera.target = Vector2Add(camera.target, Vector2Scale(diff, speed * delta / length));
+    }
+}

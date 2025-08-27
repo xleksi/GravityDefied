@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "Collision.h"
+#include "Terrain.h"
 
 class Player {
 public:
@@ -26,7 +27,7 @@ public:
 
     Player(Vector2 startPos);
 
-    void Update(float delta, const Rectangle& ground);
+    void Update(float delta, const Terrain& terrain);
     void Draw() const;
     void Reset(Vector2 startPos);
     float GetDistance() const;

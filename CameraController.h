@@ -2,11 +2,13 @@
 #include "raylib.h"
 #include "Player.h"
 
-class CameraController 
-{
-    public:
-        Camera2D camera;
+class CameraController {
+public:
+    Camera2D camera;
+    
+    // Construct targeting a start position (usually player's pos)
+    CameraController(const Vector2& target, int screenWidth, int screenHeight);
 
-    CameraController(Vector2 target, int screenWidth, int screenHeight);
-    void Update(const Player& player, float delta);
+    // Smoothly follow the player
+    void Update(const Player& player, float deltaTime);
 };

@@ -4,6 +4,7 @@
 #include "Collision.h"
 #include <iostream>
 #include <filesystem>
+#include "Terrain.h"
 
 namespace fs = std::filesystem;
 
@@ -23,26 +24,52 @@ int main()
     Player player({400, 280});
     CameraController camera(player.position, screenWidth, screenHeight);
 
-    const int groundY = 400;
-    const int thickness = 10;
-    Rectangle ground = {0, groundY - thickness/2.0f, screenWidth * 10.0f, (float)thickness};
+    // const int groundY = 400;
+    // const int thickness = 10;
+    // Rectangle ground = {0, groundY - thickness/2.0f, screenWidth * 10.0f, (float)thickness};
+
+    // while (!WindowShouldClose()) {
+    //     float deltaTime = GetFrameTime();
+
+    //     player.Update(deltaTime, ground);
+    //     camera.Update(player, deltaTime);
+
+    //     if (IsKeyPressed(KEY_R)) player.Reset({400, 280});
+
+    //     BeginDrawing();
+    //     ClearBackground(LIGHTGRAY);
+
+    //     BeginMode2D(camera.camera);
+
+    //     DrawRectangleRec(ground, DARKGREEN);
+
+    //     player.Draw();
+
+    //     EndMode2D();
+
+    //     DrawText("Controls: A/D to move, SPACE to jump, R to reset", 20, 20, 10, DARKGRAY);
+    //     float distance = player.GetDistance()/100.0f; 
+    //     DrawText(TextFormat("Distance: %.1f", distance), 20, 50, 20, BLACK);
+    //     DrawFPS(screenWidth - 100, 10);
+
+    //     EndDrawing();
+    // }
+
+    Terrain terrain(player.position.x);
 
     while (!WindowShouldClose()) {
-        float deltaTime = GetFrameTime();
+        float dt = GetFrameTime();
 
-        player.Update(deltaTime, ground);
-        camera.Update(player, deltaTime);
-
-        if (IsKeyPressed(KEY_R)) player.Reset({400, 280});
+        terrain.Update(camera.camera.target.x);  // or player.position.x
+        player.Update(dt, terrain);
+        camera.Update(player, dt);
 
         BeginDrawing();
         ClearBackground(LIGHTGRAY);
-
         BeginMode2D(camera.camera);
 
-        DrawRectangleRec(ground, DARKGREEN);
-
-        player.Draw();
+            terrain.Draw();
+            player.Draw();
 
         EndMode2D();
 

@@ -42,7 +42,7 @@ void Player::UpdateCollisionShapes()
 	};
 }
 
-void Player::Update(float delta, const Rectangle & ground)
+void Player::Update(float delta, const Terrain& Terrain)
 {
     // -------- INPUT: rear-wheel throttle --------
     if (IsKeyDown(KEY_W))      acceleration = 800.0f;   // accelerate
@@ -75,13 +75,25 @@ void Player::Update(float delta, const Rectangle & ground)
     position.y += velocity.y * delta;
 
     UpdateCollisionShapes();
+    // Query terrain height under wheel centers
+    float groundAtRear  = Terrain.GetHeightAt(rearWheel.center.x);
+    float groundAtFront = Terrain.GetHeightAt(frontWheel.center.x);
 
-    // -------- Ground collision (resolve ONCE using max penetration) --------
-    const float groundTop = ground.y;
-    float penRear  = rearWheel.center.y  + rearWheel.radius  - groundTop;
-    float penFront = frontWheel.center.y + frontWheel.radius - groundTop;
 
-    float penetration = 0.0f;
+    // compute penetration
+    float penRear  = rearWheel.center.y  + rearWheel.radius  - groundAtRear;
+    float penFront = frontWheel.center.y + frontWheel.radius - groundAtFront;
+
+    // resolve once using max penetration
+    float penetration = std::max(0.0f, std::max(penRear, penFront));
+    if (penetration > 0.0f) {
+        position.y -= penetration;
+        velocity.y = 0.0f;
+        canJump = true;
+        UpdateCollisionShapes(); // recompute wheel centers
+    }
+
+    //float penetration = 0.0f;
     if (penRear  > penetration) penetration = penRear;
     if (penFront > penetration) penetration = penFront;
 

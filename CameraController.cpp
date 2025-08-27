@@ -2,7 +2,7 @@
 #include "raymath.h"
 #include <cmath>
 
-CameraController::CameraController(Vector2 target, int screenWidth, int screenHeight) 
+CameraController::CameraController(const Vector2& target, int screenWidth, int screenHeight)
 {
     camera.target = target;
     camera.offset = { (float)screenWidth / 2, (float)screenHeight / 2 };
