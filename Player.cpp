@@ -133,7 +133,15 @@ void Player::Draw() const
         0.0f, scale, WHITE);
 
     // --- Debug (optional) ---
-    DrawCircleLines((int)rearWheel.center.x,  (int)rearWheel.center.y,  rearWheel.radius,  RED);
-    DrawCircleLines((int)frontWheel.center.x, (int)frontWheel.center.y, frontWheel.radius, RED);
-    DrawCircleLines((int)head.center.x,       (int)head.center.y,       head.radius,       BLUE);
+    DrawCircleLines((int)rearWheel.center.x, (int)rearWheel.center.y, rearWheel.radius, RED);
+	DrawCircleLines((int)frontWheel.center.x, (int)frontWheel.center.y, frontWheel.radius, RED);
+	DrawCircleLines((int)head.center.x, (int)head.center.y, head.radius, BLUE);
+
+	// Body polygon
+	for (size_t i = 0; i < bodyPoly.vertices.size(); i++)
+	{
+		Vector2 v1 = bodyPoly.vertices[i];
+		Vector2 v2 = bodyPoly.vertices[(i + 1) % bodyPoly.vertices.size()];
+		DrawLineV(v1, v2, GREEN);
+	}
 }
