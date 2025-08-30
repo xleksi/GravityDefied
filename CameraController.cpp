@@ -12,11 +12,11 @@ CameraController::CameraController(const Vector2& target, int screenWidth, int s
 
 void CameraController::Update(const Player& player, float delta) 
 {
-    static float minSpeed = 30;
+    static float minSpeed = 80;
     static float minEffectLength = 10;
-    static float fractionSpeed = 0.8f;
+    static float fractionSpeed = 1.5f;
 
-    camera.offset = { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
+    camera.offset = { GetScreenWidth() / 5.5f, GetScreenHeight() / 2.0f };
     Vector2 diff = Vector2Subtract(player.position, camera.target);
     float length = Vector2Length(diff);
 
