@@ -70,33 +70,26 @@ void car_control(Car* car, float dt) {
     }
 }
 
+// ✅ Fixed rotation (align to slope correctly)
 void car_rotate(Car* car, float dt) {
-    // Align the car with the line between wheels only when both wheels touch ground
     if (car->back_wheel.on_ground && car->front_wheel.on_ground) {
-        // Angle of the line from back -> front (radians -> degrees)
         float target = Vector2LineAngle(car->back_wheel.position, car->front_wheel.position) * RAD2DEG;
+        target = -target; // Flip sign for correct visual alignment
 
-        // **FIX:** negate the angle to match DrawRectanglePro's rotation direction
-        // (screen Y increases downward, so sign is inverted).
-        target = -target;
-
-        // Compute shortest angle difference in degrees (in [-180, 180])
         float diff = target - car->angle;
         while (diff > 180.0f) diff -= 360.0f;
         while (diff <= -180.0f) diff += 360.0f;
 
-        // Smoothly apply rotation towards the target
         car->angle += diff * ROTATE_BACK_SPEED * dt;
 
-        // Optional: keep car->angle within [-180,180] to avoid numeric drift
         if (car->angle > 180.0f) car->angle -= 360.0f;
         if (car->angle <= -180.0f) car->angle += 360.0f;
 
-        // Debug print (you had a printf here before)
         printf("Rotate: target=%f diff=%f angle=%f\n", target, diff, car->angle);
     }
 }
 
+// ✅ Removed auto-acceleration on slopes
 void car_move(Car* car, Vector2 terrain[], int terrain_length, float dt) {
     car->position.x += car->velocity.x;
     car->position.y += car->velocity.y;
@@ -109,14 +102,11 @@ void car_move(Car* car, Vector2 terrain[], int terrain_length, float dt) {
         DrawCircleV(point1, 10, RED);
         DrawCircleV(point2, 10, ORANGE);
 
-        // Keep angle for debugging (optional)
         float angle = Vector2LineAngle(point1, point2) * RAD2DEG;
         printf("Terrain angle (back wheel): %f (%d)\n", angle, terrain_index);
 
-        // REMOVE hill speed effect (no auto acceleration)
-        // car->velocity.x += angle * HILL_SPEED * dt;
+        // REMOVED: car->velocity.x += angle * HILL_SPEED * dt;
 
-        // Keep friction for better stopping control
         float friction = car->velocity.x * FRICTION;
         car->velocity.x -= friction * dt;
     }
@@ -132,8 +122,7 @@ void car_move(Car* car, Vector2 terrain[], int terrain_length, float dt) {
         float angle = Vector2LineAngle(point1, point2) * RAD2DEG;
         printf("Terrain angle (front wheel): %f (%d)\n", angle, terrain_index);
 
-        // REMOVE hill speed effect
-        // car->velocity.x += angle * HILL_SPEED * dt;
+        // REMOVED: car->velocity.x += angle * HILL_SPEED * dt;
 
         float friction = car->velocity.x * FRICTION;
         car->velocity.x -= friction * dt;
@@ -196,7 +185,6 @@ void wheel_move(Wheel* wheel, Vector2 terrain[], int terrain_count, float dt) {
         if (IsPointBelowLine(point1, point2, bottom_of_wheel, &collision_point)) {
             wheel->velocity.y = 0;
             wheel->position.y = collision_point.y - wheel->radius + 1;
-
             wheel->on_ground = true;
         }
     }
