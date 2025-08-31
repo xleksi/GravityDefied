@@ -1,6 +1,6 @@
 #include "Terrain.h"
 #include "Config.h"
-#include <cstdlib> // for rand()
+#include <cstdlib>
 #include <cmath>
 
 inline float clampf(float v, float a, float b) {
@@ -13,7 +13,7 @@ void Terrain::GenerateInitial(float startX, float width, float segmentMean, int 
     points.clear();
 
     float curX = startX;
-    float posY = (minY + maxY) * 0.5f; // start at middle of allowed range
+    float posY = (minY + maxY) * 0.5f;
     int initialSegments = 30;
 
     for (int i = 0; i < initialSegments; ++i) {

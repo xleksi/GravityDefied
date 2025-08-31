@@ -18,7 +18,6 @@ private:
 public:
     Game();
     ~Game();
-
     void Run();
 
 private:

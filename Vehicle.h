@@ -16,14 +16,9 @@ public:
 
     Vehicle();
 
-    // Place body (and initialize wheel positions + lastX)
     void PlaceAt(float x, float y);
-
-    // Body-only control & movement
     void Control(float dt);
-    void MoveBody(float dt); // move body + apply gravity + simple wheel-based friction
+    void MoveBody(float dt);
     void Rotate(float dt);
-
-    // Drawing
     void Draw(Texture2D bodyTex, Texture2D wheelFrontTex, Texture2D wheelRearTex, bool debugDraw = true);
 };

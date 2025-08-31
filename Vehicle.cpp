@@ -4,7 +4,7 @@
 #include <raymath.h>
 #include <cmath>
 
-// Constructor: set sensible defaults for wheels and body
+// struct
 Vehicle::Vehicle() {
     position = {1200.0f, 300.0f};
     velocity = {0.0f, 0.0f};
@@ -13,7 +13,7 @@ Vehicle::Vehicle() {
     angle = 0.0f;
     spriteOffset = {75.5f, 52.5f};
 
-    // Back wheel defaults
+    // Back wheel
     backWheel.radius = 32.5f;
     backWheel.padding = 10.0f;
     backWheel.stiffness = 1.2f;
@@ -26,7 +26,7 @@ Vehicle::Vehicle() {
     backWheel.visualRotation = 0;
     backWheel.lastX = 0;
 
-    // Front wheel defaults
+    // Front wheel
     frontWheel.radius = 32.5f;
     frontWheel.padding = 10.0f;
     frontWheel.stiffness = 1.2f;
@@ -40,19 +40,16 @@ Vehicle::Vehicle() {
     frontWheel.lastX = 0;
 }
 
-// Place vehicle at world pos and initialize wheels (positions + lastX + reset velocities)
 void Vehicle::PlaceAt(float x, float y) {
     position.x = x;
     position.y = y;
     velocity = {0.0f, 0.0f};
     angle = 0.0f;
 
-    // Compute bottom direction from body angle (body angle is 0 initially)
     Vector2 bottomDir = Vector2Rotate({0, 1}, angle * DEG2RAD);
 
     // BACK WHEEL
     {
-        // local attachment (same formula used by ApplySuspension)
         Vector2 attachLocal = {-width * 0.5f + backWheel.padding + backWheel.radius + backWheel.offset,
                                backWheel.attachOffsetY};
         Vector2 attachWorld = Vector2Add(Vector2Rotate(attachLocal, angle * DEG2RAD), position);
@@ -60,22 +57,20 @@ void Vehicle::PlaceAt(float x, float y) {
         // resting length = body half-height + padding + wheel radius
         float restingLen = height * 0.5f + backWheel.padding + backWheel.radius;
 
-        // place wheel exactly at the resting suspension position (no initial spring stretch)
+        // to place wheel at the resting pos
         backWheel.position = Vector2Add(attachWorld, Vector2Scale(bottomDir, restingLen));
 
-        // sensible initial velocity and rotation baseline
         backWheel.velocity = velocity;
         backWheel.lastX = backWheel.position.x;
         backWheel.on_ground = false;
-        backWheel.visualRotation = backWheel.visualRotation; // keep any value, lastX avoids jump
+        backWheel.visualRotation = backWheel.visualRotation;
     }
 
     // FRONT WHEEL
     {
         Vector2 attachLocal = { width * 0.5f - frontWheel.radius - frontWheel.padding + frontWheel.offset,
                                 frontWheel.attachOffsetY};
-        // Note: for front wheel we used a similar calculation but mirrored horizontally.
-        // If you prefer same formula as earlier code, use: -width/2 + padding + radius + offset but with front.offset positive.
+        // front wheel same as rear calculation but mirrored horizontally.
         Vector2 attachLocalCorrect = {-width * 0.5f + frontWheel.padding + frontWheel.radius + frontWheel.offset,
                                       frontWheel.attachOffsetY};
         Vector2 attachWorld = Vector2Add(Vector2Rotate(attachLocalCorrect, angle * DEG2RAD), position);
@@ -89,7 +84,7 @@ void Vehicle::PlaceAt(float x, float y) {
     }
 }
 
-// Handle player input: acceleration / braking and body tilt
+//acceleration / braking and tilt
 void Vehicle::Control(float dt) {
     float maxTilt = 8.0f;
     bool accelerating = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
@@ -99,7 +94,7 @@ void Vehicle::Control(float dt) {
     if (accelerating) {
         float torque = VEHICLE_SPEED * dt;
         velocity.x += torque;
-        backWheel.velocity.x += torque; // spin rear wheel
+        backWheel.velocity.x += torque;
         if (velocity.x > MAX_SPEED) velocity.x = MAX_SPEED;
     }
     else if (braking && velocity.x > 0.01f) {
@@ -113,18 +108,16 @@ void Vehicle::Control(float dt) {
         angle += diff * 3.0f * dt;
     }
     else {
-        // No input => friction slows vehicle
+        // friction slows vehicle
         velocity.x -= velocity.x * FRICTION * dt;
         if (fabsf(velocity.x) < 0.01f) velocity.x = 0.0f;
     }
 }
 
-// Move only body (position), apply gravity and clamp to floor
 void Vehicle::MoveBody(float dt) {
     position.x += velocity.x;
     position.y += velocity.y;
 
-    // small wheel-ground friction from previous frame's wheel.on_ground states
     if (backWheel.on_ground || frontWheel.on_ground) {
         float friction = velocity.x * FRICTION;
         velocity.x -= friction * dt;
@@ -139,7 +132,7 @@ void Vehicle::MoveBody(float dt) {
     }
 }
 
-// Rotate body to follow slope when both wheels on ground; apply small input tilt
+// Rotate body to follow slope
 void Vehicle::Rotate(float dt) {
     if (backWheel.on_ground && frontWheel.on_ground) {
         float target = Vector2LineAngle(backWheel.position, frontWheel.position) * RAD2DEG;
@@ -159,13 +152,11 @@ void Vehicle::Rotate(float dt) {
     }
 }
 
-// Drawing: wheels then body; use sprite offsets for visuals
 void Vehicle::Draw(Texture2D bodyTex, Texture2D wheelFrontTex, Texture2D wheelRearTex, bool debugDraw) {
     // Draw wheels
     backWheel.Draw(wheelRearTex, debugDraw);
     frontWheel.Draw(wheelFrontTex, debugDraw);
 
-    // Debug: driver head
     if (debugDraw) {
         Vector2 headPos = { position.x - 42.5f + spriteOffset.x, position.y - height * 0.65f + spriteOffset.y };
         float headRadius = 15.0f;
@@ -177,7 +168,6 @@ void Vehicle::Draw(Texture2D bodyTex, Texture2D wheelFrontTex, Texture2D wheelRe
         DrawText(label, (int)(headPos.x - textSize.x * 0.5f), (int)(headPos.y - textSize.y * 0.5f), fontSize, BLACK);
     }
 
-    // Draw body sprite
     Rectangle srcBody = { 0.0f, 0.0f, (float)bodyTex.width, (float)bodyTex.height };
     Rectangle destBody = {
         position.x - width * 0.5f + spriteOffset.x,
