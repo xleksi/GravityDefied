@@ -8,11 +8,11 @@
 #define WINDOW_WIDTH 1500
 #define WINDOW_HEIGHT 1000
 
-#define GRAVITY 5
+#define GRAVITY 7.5f
 #define FRICTION 0.6f
-#define ROTATION_SPEED 30
+#define ROTATION_SPEED 50
 #define ROTATE_BACK_SPEED 3
-#define VEHICLE_SPEED 6
+#define VEHICLE_SPEED 5
 #define HILL_SPEED 0.4f
 #define TRANSPARENT_BLACK (Color){0, 0, 0, 100}
 
@@ -139,22 +139,34 @@ void vehicleControl(Vehicle* vehicle, float dt) {
 
 
 void vehicleRotate(Vehicle* vehicle, float dt) {
-    bool pressingControl = (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT));
-
-    if (!pressingControl && vehicle->back_wheel.on_ground && vehicle->front_wheel.on_ground) {
+    if (vehicle->back_wheel.on_ground && vehicle->front_wheel.on_ground) {
+        // natural rotation along the terrain
         float target = Vector2LineAngle(vehicle->back_wheel.position, vehicle->front_wheel.position) * RAD2DEG;
-        target = -target; // visual flip
+        target = -target; // flip for visual
 
         float diff = target - vehicle->angle;
         while (diff > 180.0f) diff -= 360.0f;
         while (diff <= -180.0f) diff += 360.0f;
 
         vehicle->angle += diff * ROTATE_BACK_SPEED * dt;
-
         if (vehicle->angle > 180.0f) vehicle->angle -= 360.0f;
         if (vehicle->angle <= -180.0f) vehicle->angle += 360.0f;
+
+        // extra tilt from player input
+        float tilt = 0.0f;
+        if (IsKeyDown(KEY_RIGHT)) {
+            // lean back when accelerating
+            tilt = -vehicle->velocity.x * 2.0f; // tweak factor to slow tilt based on speed
+        } else if (IsKeyDown(KEY_LEFT)) {
+            // lean forward when braking
+            tilt = 20.0f; // instant forward tilt
+        }
+
+        // apply extra tilt on top of terrain rotation
+        vehicle->angle += tilt * dt;
     }
 }
+
 
 int findTerrainSegment(const std::vector<Vector2>& terrain, float x) {
     if (terrain.size() < 2) return -1;
@@ -369,11 +381,14 @@ int main() {
     
     float initialX = vehicle.position.x;
 
-    // Back wheel physics & visuals
+    float stifneess = 1.0f;
+    float damping = 2.0f;
+    float padding = 10.0f;
+
     vehicle.back_wheel.radius = 32.5f;
-    vehicle.back_wheel.padding = 15;
-    vehicle.back_wheel.stiffness = 1.0f;
-    vehicle.back_wheel.damping = 1.2f;
+    vehicle.back_wheel.padding = padding;
+    vehicle.back_wheel.stiffness = stifneess;
+    vehicle.back_wheel.damping = damping;
     vehicle.back_wheel.offset = 20.0f;
     vehicle.back_wheel.attachOffsetY = 0.0f;
     vehicle.back_wheel.spriteOffset = {32.5, 35};
@@ -383,20 +398,23 @@ int main() {
 
     // Front wheel physics & visuals
     vehicle.front_wheel.radius = 32.5f;
-    vehicle.front_wheel.padding = 15;
-    vehicle.front_wheel.stiffness = 1.0f;
-    vehicle.front_wheel.damping = 1.2f;
-    vehicle.front_wheel.offset = 180.0f;
+    vehicle.front_wheel.padding = padding;
+    vehicle.front_wheel.stiffness = stifneess;
+    vehicle.front_wheel.damping = damping;
+    vehicle.front_wheel.offset = 175.0f;
     vehicle.front_wheel.attachOffsetY = 0.0f;
     vehicle.front_wheel.spriteOffset = {32.5, 35};
     vehicle.front_wheel.spriteScale = 1.1f;
     vehicle.front_wheel.position = {vehicle.position.x + vehicle.width / 2 - vehicle.front_wheel.radius - vehicle.front_wheel.padding,
                                 vehicle.position.y + vehicle.height / 2 + vehicle.front_wheel.radius + vehicle.front_wheel.padding};
 
+
     // Terrain generation params
     const float SEGMENT_MEAN = 220.0f; // bigger spacing between points
-    const int SEGMENT_RANDOM_OFFSET = 50;
-    const int HEIGHT_RANDOM = 30;
+    const int SEGMENT_RANDOM_OFFSET = 60;
+    const int HEIGHT_RANDOM = 80;
+    const float JUMP_PROBABILITY = 0.15f;
+
     const float REMOVAL_PADDING = (float)WINDOW_WIDTH * 2.0f;
     const float GENERATE_AHEAD = (float)WINDOW_WIDTH * 2.0f;
 
@@ -405,13 +423,26 @@ int main() {
 
     float startX = -SEGMENT_MEAN * 4.0f;
     int posY = GetRandomValue((int)(WINDOW_HEIGHT * 0.6f), (int)(WINDOW_HEIGHT * 0.85f));
-    int initialSegments = 30;
     float curX = startX;
+    int initialSegments = 30;
+
     for (int i = 0; i < initialSegments; ++i) {
-        int moveY = GetRandomValue(-HEIGHT_RANDOM, HEIGHT_RANDOM);
-        terrain.push_back({curX, (float)posY});
-        posY = (int)clampf((float)posY + moveY, WINDOW_HEIGHT * 0.25f, WINDOW_HEIGHT * 0.95f);
-        curX += SEGMENT_MEAN + GetRandomValue(-SEGMENT_RANDOM_OFFSET, SEGMENT_RANDOM_OFFSET);
+        float nextX = curX + SEGMENT_MEAN + GetRandomValue(-SEGMENT_RANDOM_OFFSET, SEGMENT_RANDOM_OFFSET);
+
+        // Decide next Y
+        int moveY;
+        if (((float)GetRandomValue(0, 100) / 100.0f) < JUMP_PROBABILITY) {
+            // create a jump: steep drop
+            moveY = GetRandomValue(HEIGHT_RANDOM, HEIGHT_RANDOM * 2) * -1; // negative for downward jump
+        } else {
+            moveY = GetRandomValue(-HEIGHT_RANDOM, HEIGHT_RANDOM); // normal terrain
+        }
+
+        int nextY = (int)clampf((float)posY + moveY, WINDOW_HEIGHT * 0.25f, WINDOW_HEIGHT * 0.95f);
+
+        terrain.push_back({nextX, (float)nextY});
+        posY = nextY;
+        curX = nextX;
     }
 
     bool debugDraw = true;
@@ -465,7 +496,7 @@ int main() {
         EndMode2D();
 
         // --- HUD ---
-        float distanceMeters = (vehicle.position.x - initialX) / 50.0f;
+        float distanceMeters = (vehicle.position.x - initialX) / 75.0f;
         float speedScaled = vehicle.velocity.x * 5.0f;
 
         DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, BLACK);
