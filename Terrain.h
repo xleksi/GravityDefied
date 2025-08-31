@@ -11,5 +11,4 @@ public:
     void TrimBehind(float cameraX, float removalPadding);
     void Draw();
     int FindSegment(float x) const;
-    float GetHeightAt(float x) const;
 };

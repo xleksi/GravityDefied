@@ -1,11 +1,12 @@
 #include "Game.h"
-#include <raymath.h>
-#include <raylib.h>
 #include "Config.h"
 #include "Utils.h"
+#include <raylib.h>
+#include <raymath.h>
 
+// Game constructor: generate terrain first, then place vehicle high so it drops
 Game::Game() : debugDraw(true) {
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Uphill Racer - Refactored");
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Uphill Racer - Structured");
     SetTargetFPS(144);
 
     // Load assets
@@ -13,42 +14,39 @@ Game::Game() : debugDraw(true) {
     wheelFrontTex = LoadTexture("assets/wheel_front.png");
     wheelRearTex = LoadTexture("assets/wheel_rear.png");
 
-    // Setup camera
-    camera.offset = {WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f};
-    camera.rotation = 0;
+    // Camera defaults
+    camera.offset = { (float)WINDOW_WIDTH * 0.5f, (float)WINDOW_HEIGHT * 0.5f };
+    camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    // Set player start X position
+    // Choose player start X
     float playerStartX = 1200.0f;
 
-    // Generate terrain with plenty behind and ahead of the player
+    // Generate initial terrain (lots behind + ahead)
     terrain.GenerateInitial(
-        playerStartX - 2000.0f,       // 2000 px behind
-        WINDOW_WIDTH * 3.0f,          // 3 screens wide ahead
-        220.0f,                       // segment mean
-        60.0f,                        // segment random offset
-        80.0f,                        // height random
-        0.15f,                        // jump probability
-        WINDOW_HEIGHT * 0.25f,        // min Y
-        WINDOW_HEIGHT * 0.95f         // max Y
+        playerStartX - 2000.0f,      // start far behind
+        WINDOW_WIDTH * 3.0f,         // generate a good chunk ahead
+        220.0f,                      // segment mean
+        60,                          // random offset
+        80,                          // height random
+        0.15f,                       // jump probability
+        WINDOW_HEIGHT * 0.25f,       // min Y
+        WINDOW_HEIGHT * 0.95f        // max Y
     );
 
-    // Initialize vehicle
-    vehicle.width = 250;
-    vehicle.height = 100;
-    vehicle.angle = 0;
+    // Vehicle visual/body properties (wheels are already constructed in Vehicle ctor)
+    vehicle.width = 250.0f;
+    vehicle.height = 100.0f;
     vehicle.spriteOffset = {75.5f, 52.5f};
 
-    vehicle.position.x = playerStartX;
+    // Place vehicle high above so it drops naturally
+    float spawnY = WINDOW_HEIGHT * -0.35f; // spawn near top area to see drop
+    vehicle.PlaceAt(playerStartX, spawnY);
 
-    // Get ground height at playerStartX
-    float groundY = terrain.GetHeightAt(playerStartX);
-    vehicle.position.y = groundY - 150.0f; // Offset so player floats above ground
-
-    // Store initial X for distance calculation
+    // initialX for HUD distance
     initialX = vehicle.position.x;
 
-    // Camera target on player
+    // camera follow
     camera.target = vehicle.position;
 }
 
@@ -73,17 +71,34 @@ void Game::HandleInput() {
 }
 
 void Game::Update(float dt) {
+    // 1) Apply player control to body
     vehicle.Control(dt);
-    vehicle.Rotate(dt);
-    vehicle.Move(terrain.points, dt, debugDraw);
 
-    // Update camera to follow player
+    // 2) Move body (position update + gravity)
+    vehicle.MoveBody(dt);
+
+    // 3) Rotate body (align to slope when both wheels were on ground last frame)
+    vehicle.Rotate(dt);
+
+    // 4) Wheel collision with terrain (wheelMove)
+    vehicle.backWheel.Move(terrain.points, dt);
+    vehicle.frontWheel.Move(terrain.points, dt);
+
+    // 5) Wheel visual rotation update
+    vehicle.backWheel.UpdateRotation();
+    vehicle.frontWheel.UpdateRotation();
+
+    // 6) Apply suspension forces (attach wheels back to body / change body velocity)
+    vehicle.backWheel.ApplySuspension(vehicle.position, vehicle.angle, vehicle.velocity, vehicle.height, vehicle.width, dt);
+    vehicle.frontWheel.ApplySuspension(vehicle.position, vehicle.angle, vehicle.velocity, vehicle.height, vehicle.width, dt);
+
+    // 7) Camera follow + zoom clamp
     camera.target = vehicle.position;
     camera.zoom = 0.8f - vehicle.velocity.x / 10.0f;
     camera.zoom = clampf(camera.zoom, 0.8f, 1.3f);
 
-    // Extend terrain ahead and trim behind
-    terrain.GenerateAhead(camera.target.x, WINDOW_WIDTH * 2.0f, 220, 60, 80, 0.15f);
+    // 8) Terrain streaming
+    terrain.GenerateAhead(camera.target.x, WINDOW_WIDTH * 2.0f, 220.0f, 60, 80, 0.15f);
     terrain.TrimBehind(camera.target.x, WINDOW_WIDTH * 2.0f);
 }
 
@@ -98,9 +113,9 @@ void Game::Draw() {
 
     EndMode2D();
 
+    // HUD
     float distanceMeters = (vehicle.position.x - initialX) / 75.0f;
     float speedScaled = vehicle.velocity.x * 5.0f;
-
     DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, BLACK);
     DrawText(TextFormat("Distance: %.0f m", distanceMeters), 10, 40, 20, BLACK);
     DrawText(TextFormat("Speed: %.0f", speedScaled), 10, 70, 20, BLACK);

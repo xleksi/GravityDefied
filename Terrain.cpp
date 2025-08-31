@@ -28,26 +28,6 @@ void Terrain::GenerateInitial(float startX, float width, float segmentMean, int 
     }
 }
 
-float Terrain::GetHeightAt(float x) const {
-    if (points.empty()) return WINDOW_HEIGHT / 2.0f;
-
-    // Find the two points between which x lies
-    for (size_t i = 1; i < points.size(); i++) {
-        if (x <= points[i].x) {
-            float x1 = points[i - 1].x;
-            float y1 = points[i - 1].y;
-            float x2 = points[i].x;
-            float y2 = points[i].y;
-
-            float t = (x - x1) / (x2 - x1);
-            return y1 + t * (y2 - y1); // Linear interpolation
-        }
-    }
-
-    return points.back().y; // If x is beyond last point
-}
-
-
 void Terrain::GenerateAhead(float cameraX, float generateAhead, float segmentMean, int randomOffset, int heightRandom, float jumpProbability) {
     while (points.empty() || points.back().x < cameraX + generateAhead) {
         Vector2 last = points.empty() ? Vector2{cameraX, (float)WINDOW_HEIGHT / 2} : points.back();

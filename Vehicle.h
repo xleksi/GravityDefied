@@ -1,7 +1,6 @@
 #pragma once
 #include <raylib.h>
 #include "Wheel.h"
-#include <vector>
 
 class Vehicle {
 public:
@@ -17,8 +16,14 @@ public:
 
     Vehicle();
 
+    // Place body (and initialize wheel positions + lastX)
+    void PlaceAt(float x, float y);
+
+    // Body-only control & movement
     void Control(float dt);
+    void MoveBody(float dt); // move body + apply gravity + simple wheel-based friction
     void Rotate(float dt);
-    void Move(const std::vector<Vector2>& terrain, float dt, bool debugDraw);
+
+    // Drawing
     void Draw(Texture2D bodyTex, Texture2D wheelFrontTex, Texture2D wheelRearTex, bool debugDraw = true);
 };
