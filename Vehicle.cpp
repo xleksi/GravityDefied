@@ -92,8 +92,8 @@ void Vehicle::PlaceAt(float x, float y) {
 // Handle player input: acceleration / braking and body tilt
 void Vehicle::Control(float dt) {
     float maxTilt = 8.0f;
-    bool accelerating = IsKeyDown(KEY_RIGHT);
-    bool braking = IsKeyDown(KEY_LEFT);
+    bool accelerating = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
+    bool braking      = IsKeyDown(KEY_LEFT)  || IsKeyDown(KEY_A);
     const float MAX_SPEED = 10.0f;
 
     if (accelerating) {

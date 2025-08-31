@@ -1,4 +1,3 @@
-// Config.h
 #pragma once
 
 constexpr int WINDOW_WIDTH = 1500;

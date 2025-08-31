@@ -67,7 +67,7 @@ void Game::Run() {
 }
 
 void Game::HandleInput() {
-    if (IsKeyPressed(KEY_D)) debugDraw = !debugDraw;
+    if (IsKeyPressed(KEY_Z)) debugDraw = !debugDraw;
 }
 
 void Game::Update(float dt) {
@@ -104,7 +104,7 @@ void Game::Update(float dt) {
 
 void Game::Draw() {
     BeginDrawing();
-    ClearBackground(WHITE);
+    ClearBackground(LIGHTGRAY);
 
     BeginMode2D(camera);
 
@@ -119,6 +119,7 @@ void Game::Draw() {
     DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, BLACK);
     DrawText(TextFormat("Distance: %.0f m", distanceMeters), 10, 40, 20, BLACK);
     DrawText(TextFormat("Speed: %.0f", speedScaled), 10, 70, 20, BLACK);
+    DrawText("Use A/D or Left/Right to drive, Z to toggle debug", 10, 100, 20, BLACK);
 
     EndDrawing();
 }

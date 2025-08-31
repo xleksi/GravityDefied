@@ -46,6 +46,6 @@ void Terrain::TrimBehind(float cameraX, float removalPadding) {
 
 void Terrain::Draw() {
     for (size_t i = 1; i < points.size(); ++i) {
-        DrawLineEx(points[i - 1], points[i], 5, BLACK);
+        DrawLineEx(points[i - 1], points[i], 5, GREEN);
     }
 }
