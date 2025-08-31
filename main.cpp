@@ -12,7 +12,7 @@
 #define FRICTION 0.6f
 #define ROTATION_SPEED 30
 #define ROTATE_BACK_SPEED 3
-#define VEHICLE_SPEED 5
+#define VEHICLE_SPEED 4
 #define HILL_SPEED 0.4f
 #define TRANSPARENT_BLACK (Color){0, 0, 0, 100}
 
@@ -99,15 +99,19 @@ void vehicleControl(Vehicle* vehicle, float dt) {
     bool accelerating = IsKeyDown(KEY_RIGHT);
     bool braking = IsKeyDown(KEY_LEFT);
 
+    const float MAX_SPEED = 10.0f;
+
     // --- Handle acceleration ---
     if (accelerating) {
-        if (vehicle->back_wheel.on_ground) vehicle->velocity.x += VEHICLE_SPEED * dt;
-        if (vehicle->front_wheel.on_ground) vehicle->velocity.x += VEHICLE_SPEED * dt;
+        float torque = VEHICLE_SPEED * dt;
 
-        // smooth counterclockwise tilt based on speed
-        targetTilt = -maxTilt * speedFactor;
-        float diff = targetTilt - vehicle->angle;
-        vehicle->angle += diff * 2.0f * dt;
+        // Rear wheel drives vehicle
+        vehicle->velocity.x += torque;   // propulsion applied to vehicle
+
+        // Rear wheel spins independently of ground contact
+        vehicle->back_wheel.velocity.x += torque; 
+
+        if (vehicle->velocity.x > MAX_SPEED) vehicle->velocity.x = MAX_SPEED;
     }
     else if (braking && vehicle->velocity.x > 0.01f) {
         // strong braking: just reduce velocity to zero
