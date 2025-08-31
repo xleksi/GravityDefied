@@ -8,9 +8,9 @@
 #define WINDOW_WIDTH 1500
 #define WINDOW_HEIGHT 1000
 
-#define GRAVITY 7.5f
+#define GRAVITY 5
 #define FRICTION 0.6f
-#define ROTATION_SPEED 50
+#define ROTATION_SPEED 30
 #define ROTATE_BACK_SPEED 3
 #define VEHICLE_SPEED 5
 #define HILL_SPEED 0.4f
@@ -52,6 +52,7 @@ struct Wheel {
     float spriteScale;        // scale for sprite drawing
     bool on_ground;
     float visualRotation;     // optional: track wheel rotation for sprite
+    float lastX;
 };
 
 struct Vehicle {
@@ -225,7 +226,6 @@ void vehicleMove(Vehicle* vehicle, const std::vector<Vector2>& terrain, float dt
     }
 }
 
-
 void vehicleAapplySuspension(Vehicle* vehicle, Wheel* wheel, float dt) {
     Vector2 bottom_direction = Vector2Rotate({0, 1}, vehicle->angle * DEG2RAD);
 
@@ -282,6 +282,12 @@ void wheelMove(Wheel* wheel, const std::vector<Vector2>& terrain, float dt) {
     if (!wheel->on_ground) {
         wheel->velocity.y += GRAVITY * dt;
     }
+}
+
+void updateWheelRotation(Wheel* wheel) {
+    float dx = wheel->position.x - wheel->lastX;
+    wheel->visualRotation += (dx / (2.0f * PI * wheel->radius)) * 360.0f;
+    wheel->lastX = wheel->position.x;
 }
 
 // Draws textures + debug overlays. Uses spriteOffset to nudge visuals without touching physics.
@@ -381,7 +387,7 @@ int main() {
     
     float initialX = vehicle.position.x;
 
-    float stifneess = 1.0f;
+    float stifneess = 1.2f;
     float damping = 2.0f;
     float padding = 10.0f;
 
@@ -395,6 +401,7 @@ int main() {
     vehicle.back_wheel.spriteScale = 1.1f;
     vehicle.back_wheel.position = {vehicle.position.x - vehicle.width / 2 + vehicle.back_wheel.radius + vehicle.back_wheel.padding,
                                vehicle.position.y + vehicle.height / 2 + vehicle.back_wheel.radius + vehicle.back_wheel.padding};
+    vehicle.back_wheel.lastX = vehicle.back_wheel.position.x;
 
     // Front wheel physics & visuals
     vehicle.front_wheel.radius = 32.5f;
@@ -407,6 +414,7 @@ int main() {
     vehicle.front_wheel.spriteScale = 1.1f;
     vehicle.front_wheel.position = {vehicle.position.x + vehicle.width / 2 - vehicle.front_wheel.radius - vehicle.front_wheel.padding,
                                 vehicle.position.y + vehicle.height / 2 + vehicle.front_wheel.radius + vehicle.front_wheel.padding};
+    vehicle.front_wheel.lastX = vehicle.front_wheel.position.x;
 
 
     // Terrain generation params
@@ -481,12 +489,16 @@ int main() {
             DrawLineEx(terrain[i - 1], terrain[i], 5, BLACK);
         }
 
-        // update physics
         vehicleControl(&vehicle, dt);
         vehicleMove(&vehicle, terrain, dt, debugDraw);
         vehicleRotate(&vehicle, dt);
+
         wheelMove(&vehicle.back_wheel, terrain, dt);
         wheelMove(&vehicle.front_wheel, terrain, dt);
+
+        updateWheelRotation(&vehicle.back_wheel);
+        updateWheelRotation(&vehicle.front_wheel);
+
         vehicleAapplySuspension(&vehicle, &vehicle.back_wheel, dt);
         vehicleAapplySuspension(&vehicle, &vehicle.front_wheel, dt);
 
