@@ -47,18 +47,46 @@ void Vehicle::PlaceAt(float x, float y) {
     velocity = {0.0f, 0.0f};
     angle = 0.0f;
 
-    // Position wheels relative to body (visual/physics start positions)
-    backWheel.position.x = position.x - (width * 0.5f) + backWheel.radius + backWheel.padding + backWheel.offset;
-    backWheel.position.y = position.y + (height * 0.5f) + backWheel.radius + backWheel.padding;
-    backWheel.lastX = backWheel.position.x;
-    backWheel.velocity = {0.0f, 0.0f};
-    backWheel.on_ground = false;
+    // Compute bottom direction from body angle (body angle is 0 initially)
+    Vector2 bottomDir = Vector2Rotate({0, 1}, angle * DEG2RAD);
 
-    frontWheel.position.x = position.x + (width * 0.5f) - frontWheel.radius - frontWheel.padding + frontWheel.offset;
-    frontWheel.position.y = position.y + (height * 0.5f) + frontWheel.radius + frontWheel.padding;
-    frontWheel.lastX = frontWheel.position.x;
-    frontWheel.velocity = {0.0f, 0.0f};
-    frontWheel.on_ground = false;
+    // BACK WHEEL
+    {
+        // local attachment (same formula used by ApplySuspension)
+        Vector2 attachLocal = {-width * 0.5f + backWheel.padding + backWheel.radius + backWheel.offset,
+                               backWheel.attachOffsetY};
+        Vector2 attachWorld = Vector2Add(Vector2Rotate(attachLocal, angle * DEG2RAD), position);
+
+        // resting length = body half-height + padding + wheel radius
+        float restingLen = height * 0.5f + backWheel.padding + backWheel.radius;
+
+        // place wheel exactly at the resting suspension position (no initial spring stretch)
+        backWheel.position = Vector2Add(attachWorld, Vector2Scale(bottomDir, restingLen));
+
+        // sensible initial velocity and rotation baseline
+        backWheel.velocity = velocity;
+        backWheel.lastX = backWheel.position.x;
+        backWheel.on_ground = false;
+        backWheel.visualRotation = backWheel.visualRotation; // keep any value, lastX avoids jump
+    }
+
+    // FRONT WHEEL
+    {
+        Vector2 attachLocal = { width * 0.5f - frontWheel.radius - frontWheel.padding + frontWheel.offset,
+                                frontWheel.attachOffsetY};
+        // Note: for front wheel we used a similar calculation but mirrored horizontally.
+        // If you prefer same formula as earlier code, use: -width/2 + padding + radius + offset but with front.offset positive.
+        Vector2 attachLocalCorrect = {-width * 0.5f + frontWheel.padding + frontWheel.radius + frontWheel.offset,
+                                      frontWheel.attachOffsetY};
+        Vector2 attachWorld = Vector2Add(Vector2Rotate(attachLocalCorrect, angle * DEG2RAD), position);
+
+        float restingLen = height * 0.5f + frontWheel.padding + frontWheel.radius;
+        frontWheel.position = Vector2Add(attachWorld, Vector2Scale(bottomDir, restingLen));
+        frontWheel.velocity = velocity;
+        frontWheel.lastX = frontWheel.position.x;
+        frontWheel.on_ground = false;
+        frontWheel.visualRotation = frontWheel.visualRotation;
+    }
 }
 
 // Handle player input: acceleration / braking and body tilt
